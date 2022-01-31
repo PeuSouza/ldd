@@ -1,0 +1,209 @@
+import com.sun.tools.javac.Main;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.*;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.events.EndElement;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class SAX extends DefaultHandler {
+
+
+    private String name = "";
+    private boolean xname = false;
+
+    private String line = "";
+    private boolean xline = false;
+
+    private String vendor = "";
+    private boolean xvendor = false;
+
+    private String qtd = "";
+    private boolean xqtd = false;
+
+    private String price = "";
+    private boolean xprice = false;
+
+    static List<String> listx = new ArrayList();
+    static List<String> listy = new ArrayList();
+
+    static List<String> listvend = new ArrayList();
+    static List<String> listline = new ArrayList();
+    static List<String> listqtd = new ArrayList();
+    static List<String> listprice = new ArrayList();
+
+    static List<String> listvendy = new ArrayList();
+    static List<String> listliney = new ArrayList();
+    static List<String> listqtdy = new ArrayList();
+    static List<String> listpricey = new ArrayList();
+
+
+    //@Override
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+
+        switch (qName) {
+
+            case "name":
+                xname = true;
+                break;
+
+            case "line":
+                xline = true;
+                break;
+
+            case "vendor":
+                xvendor = true;
+                break;
+
+            case "quantityInStock":
+                xqtd = true;
+                break;
+
+            case "buyPrice":
+                xprice = true;
+                break;
+
+        }
+    }
+
+    public void endElement(String uri, String localName, String qName) throws SAXException {
+        //boolean product = qName.equalsIgnoreCase("product");
+
+        if (qName.equals("product")) {
+            listx.add(name);
+            listline.add(line);
+            listvend.add(vendor);
+            listqtd.add(qtd);
+            listprice.add(price);
+
+        }
+    }
+
+    // @Override
+    public void characters(char[] ch, int start, int length) {
+
+        if (xname) {
+            name = new String(ch, start, length);
+        }
+        xname = false;
+
+        if (xline) {
+            line = new String(ch, start, length);
+        }
+        xline = false;
+
+        if (xvendor) {
+            vendor = new String(ch, start, length);
+        }
+        xvendor = false;
+
+        if (xqtd) {
+            qtd = new String(ch, start, length);
+        }
+        xqtd = false;
+
+        if (xprice) {
+            price = new String(ch, start, length);
+        }
+        xprice = false;
+    }
+
+    public static void main(String[] args) throws XMLStreamException {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
+            saxParser.parse(new File("products.xml"),
+                    new SAX());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        for (int x = 0; x < listx.size(); x++) {
+            listy.add(listx.get(x));
+
+        }
+
+        java.util.Collections.sort(listx);
+
+
+        XMLOutputFactory xmlof = XMLOutputFactory.newFactory();
+        Writer writer = null;
+        try {
+            writer = new FileWriter("saida.Html");
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(SAX.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        XMLStreamWriter out = (xmlof.createXMLStreamWriter(writer));
+
+        out.writeStartDocument();
+        out.writeStartElement("table");
+        out.writeStartElement("thead");
+        out.writeStartElement("tr");
+        out.writeStartElement("th");
+        out.writeCharacters("name");
+        out.writeEndElement();
+        out.writeStartElement("th");
+        out.writeCharacters("Line");
+        out.writeEndElement();
+        out.writeStartElement("th");
+        out.writeCharacters("vendor");
+        out.writeEndElement();
+        out.writeStartElement("th");
+        out.writeCharacters("Quantity is Stock");
+        out.writeEndElement();
+        out.writeStartElement("th");
+        out.writeCharacters("Buy price");
+        out.writeEndElement();
+        out.writeEndElement();
+        out.writeEndElement();
+        out.writeStartElement("tbody");
+
+        for (int i = 0; i < listy.size(); i++) {
+
+            int p;
+            for (p = 0; p < listy.size(); p++) {
+                if (listx.get(i).contains(listy.get(p))) {
+                    listvendy.add(listvend.get(p));
+                    listliney.add(listline.get(p));
+                    listqtdy.add(listqtd.get(p));
+                    listpricey.add(listprice.get(p));
+
+                    out.writeStartElement("tr");
+                    out.writeStartElement("td");
+                    out.writeCharacters(listy.get(p));
+                    out.writeEndElement();
+                    out.writeStartElement("td");
+                    out.writeCharacters(listline.get(p));
+                    out.writeEndElement();
+                    out.writeStartElement("td");
+                    out.writeCharacters(listvend.get(p));
+                    out.writeEndElement();
+                    out.writeStartElement("td");
+                    out.writeCharacters(listqtd.get(p));
+                    out.writeEndElement();
+                    out.writeStartElement("td");
+                    out.writeCharacters(listprice.get(p));
+                    out.writeEndElement();
+                    out.writeEndElement();
+                }
+            }
+        }
+        out.writeEndElement();
+        out.writeEndElement();;
+        out.writeEndDocument();
+        out.close();
+    }
+ }
+
